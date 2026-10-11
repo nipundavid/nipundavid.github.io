@@ -5,7 +5,7 @@ A static GitHub Pages portfolio using the **Engineering Fieldnotes** blueprint t
 ## Structure
 
 - `index.html` — homepage and project/notes index
-- `work/` — four case studies (NEOM simulation, Text-to-SQL, composable SDKs, enterprise RAG)
+- `work/` — five case studies (NEOM simulation, Text-to-SQL, composable SDKs, enterprise RAG)
 - `notes/` — engineering notes archive and LLM cascading report page
 - `assets/css/styles.css` — shared responsive design system
 - `assets/js/main.js` — mobile navigation
@@ -42,4 +42,4 @@ No build step, Node.js, backend, or framework is required.
 
 ## Accuracy and confidentiality
 
-The case studies are written from the supplied resume and STAR stories. Client/company details are kept high-level; diagrams are illustrative and do not reproduce client assets. Check that every detail is approved for public disclosure before publishing. No Genie Studio project is included.
+The case studies are based on project experience and documented outcomes. Client/company details are kept high-level; diagrams are illustrative and do not reproduce client assets. Check that every detail is approved for public disclosure before publishing. Employer and internal platform names are omitted from the orchestration case study. No Genie Studio project is included.
