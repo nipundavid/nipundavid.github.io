@@ -1,1 +1,161 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Text-to-SQL — Nipun David</title><meta name="description" content="Case study: a controlled, graph-based Text-to-SQL workflow."><link rel="icon" href="../assets/illustrations/favicon.svg"><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="../assets/css/styles.css"></head><body><header class="topbar"><a class="brand" href="../index.html"><span class="brand-mark">ND</span><span><b>NIPUN DAVID</b><small>ENGINEERING FIELDNOTES / REV 01</small></span></a><nav class="nav"><a href="../index.html#work">● PROJECTS</a><a href="../notes/index.html">● FIELDNOTES</a><a href="../index.html#contact">● CONTACT</a></nav></header><main class="page-main"><p class="page-kicker">CASE 02 // APPLIED AI</p><h1 class="page-title">Text-to-SQL:<br>making LLMs trustworthy.</h1><p class="page-deck">A controlled graph workflow for translating business questions into Snowflake SQL, with two-stage retrieval, explicit validation, bounded retries, and human review.</p><div class="page-meta"><span>LANGGRAPH</span><span>AMAZON BEDROCK</span><span>SQLGLOT</span><span>SNOWFLAKE</span></div><div class="schematic-panel"><img src="../assets/illustrations/text-to-sql.svg" alt="Question to retrieval to SQL generation and validation workflow"><p class="schematic-caption">FIG 03 / CONTROLLED GENERATION FLOW — CONCEPTUAL ARCHITECTURE.</p></div><div class="article-layout"><article class="article-content"><h2>The problem</h2><p>A data team supporting senior business stakeholders needed help producing complex Snowflake queries for portfolio and project performance reviews. The information was spread across multiple tables maintained by different teams, and manual query writing could take days.</p><h2>The architectural decision</h2><p>I proposed a graph-based workflow rather than multi-agent orchestration. The core process was sequential: understand the question, retrieve context, generate SQL, validate, then either execute through a controlled path or return SQL for review. A graph made execution order explicit, easier to debug, and predictable without adding unnecessary coordination complexity.</p><h2>How the workflow works</h2><h3>01 / Retrieve business meaning and schema</h3><p>The workflow retrieves semantic information—table descriptions, metrics, and business relationships—from S3. It extracts entities such as metrics, filters, and grouping from the question, then retrieves relevant DDL through a Bedrock Knowledge Base. This separates what the user means from how the data is physically represented.</p><h3>02 / Generate and validate</h3><p>A ReAct agent generates SQL using the retrieved context. SQLGlot parses the query and checks that it is SELECT-only. If validation fails, the error is fed back for regeneration, with retries bounded to three attempts.</p><h3>03 / Keep a human in the loop</h3><p>A routing function determines whether to return SQL for manual review, proceed through the controlled execution path, retry when attempts remain, or return an error. The human review gate is part of the workflow, not an afterthought.</p><h2>Failure analysis: schema drift</h2><p>During integration testing, upstream table changes left the semantic layer with stale column names and table structures. The model generated plausible SQL against incorrect context, so retries could not fix the root cause. We corrected the semantic layer and added a freshness mechanism using Snowflake triggers to update a schema URL, which the workflow reads at query time.</p><h2>Outcome and limits</h2><p>The data team is using the solution in a pilot as a starting point for query generation, with generated SQL either run through the approved path or modified manually. A production-wide adoption metric was not available at the time of this project, so this portfolio does not claim one.</p><blockquote>When retries fail consistently, inspect the inputs and system boundaries before blaming the model.</blockquote><h2>Design principles</h2><ul><li>Prefer deterministic orchestration when the process is fundamentally sequential.</li><li>Separate retrieval, generation, validation, and execution concerns.</li><li>Bound retries and make failure states explicit.</li><li>Use defense in depth: SQL validation, read-only credentials, and human review.</li><li>Treat schema freshness as a data integration problem, not a prompt problem.</li></ul><p><strong>Disclosure:</strong> The diagram is a simplified reference flow. Enterprise implementation details are intentionally omitted.</p><a class="back-link" href="../index.html#work">← BACK TO SELECTED WORK</a></article><aside class="side-panel"><span>CASE FILE / 002</span><p>ARCHITECTURE<br>Graph-based orchestration</p><p>RELIABILITY<br>Validation · bounded retries · review</p><p>FAILURE MODE<br>Stale schema / semantic drift</p></aside></div></main><footer class="site-footer"><span>ND / NIPUN DAVID</span><span>FROM ARCHITECTURE TO PRODUCTION</span><a href="../index.html">HOME ↗</a></footer></body></html>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Text-to-SQL — Nipun David</title>
+    <meta
+      name="description"
+      content="Case study: a controlled, graph-based Text-to-SQL workflow."
+    />
+    <link rel="icon" href="../assets/illustrations/favicon.svg" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../assets/css/styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="../index.html"
+        ><span class="brand-mark">ND</span
+        ><span
+          ><b>NIPUN DAVID</b
+          ><small>ENGINEERING FIELDNOTES / REV 01</small></span
+        ></a
+      >
+      <nav class="nav">
+        <a href="../index.html#work">● PROJECTS</a
+        ><a href="../notes/index.html">● FIELDNOTES</a
+        ><a href="../index.html#contact">● CONTACT</a>
+      </nav>
+    </header>
+    <main class="page-main">
+      <p class="page-kicker">CASE 02 // APPLIED AI</p>
+      <h1 class="page-title">Text-to-SQL:<br />making LLMs trustworthy.</h1>
+      <p class="page-deck">
+        A controlled graph workflow for translating business questions into
+        Snowflake SQL, with two-stage retrieval, explicit validation, bounded
+        retries, and human review.
+      </p>
+      <div class="page-meta">
+        <span>LANGGRAPH</span><span>AMAZON BEDROCK</span><span>SQLGLOT</span
+        ><span>SNOWFLAKE</span>
+      </div>
+      <div class="schematic-panel">
+        <img
+          src="../assets/illustrations/text-to-sql.svg"
+          alt="Question to retrieval to SQL generation and validation workflow"
+        />
+        <p class="schematic-caption">
+          FIG 03 / CONTROLLED GENERATION FLOW — CONCEPTUAL ARCHITECTURE.
+        </p>
+      </div>
+      <div class="article-layout">
+        <article class="article-content">
+          <h2>The problem</h2>
+          <p>
+            A data team supporting senior business stakeholders needed help
+            producing complex Snowflake queries for portfolio and project
+            performance reviews. The information was spread across multiple
+            tables maintained by different teams, and manual query writing could
+            take days.
+          </p>
+          <h2>The architectural decision</h2>
+          <p>
+            I proposed a graph-based workflow rather than multi-agent
+            orchestration. The core process was sequential: understand the
+            question, retrieve context, generate SQL, validate, then either
+            execute through a controlled path or return SQL for review. A graph
+            made execution order explicit, easier to debug, and predictable
+            without adding unnecessary coordination complexity.
+          </p>
+          <h2>How the workflow works</h2>
+          <h3>01 / Retrieve business meaning and schema</h3>
+          <p>
+            The workflow retrieves semantic information—table descriptions,
+            metrics, and business relationships—from S3. It extracts entities
+            such as metrics, filters, and grouping from the question, then
+            retrieves relevant DDL through a Bedrock Knowledge Base. This
+            separates what the user means from how the data is physically
+            represented.
+          </p>
+          <h3>02 / Generate and validate</h3>
+          <p>
+            A ReAct agent generates SQL using the retrieved context. SQLGlot
+            parses the query and checks that it is SELECT-only. If validation
+            fails, the error is fed back for regeneration, with retries bounded
+            to three attempts.
+          </p>
+          <h3>03 / Keep a human in the loop</h3>
+          <p>
+            A routing function determines whether to return SQL for manual
+            review, proceed through the controlled execution path, retry when
+            attempts remain, or return an error. The human review gate is part
+            of the workflow, not an afterthought.
+          </p>
+          <h2>Failure analysis: schema drift</h2>
+          <p>
+            During integration testing, upstream table changes left the semantic
+            layer with stale column names and table structures. The model
+            generated plausible SQL against incorrect context, so retries could
+            not fix the root cause. We corrected the semantic layer and added a
+            freshness mechanism using Snowflake triggers to update a schema URL,
+            which the workflow reads at query time.
+          </p>
+          <h2>Outcome and limits</h2>
+          <p>
+            The solution was delivered as a working foundation for the data
+            team, enabling analysts to generate SQL from natural-language
+            questions and refine queries before execution. By combining
+            schema-aware retrieval, SQL validation, bounded retries, and human
+            review, the system established a more structured and controlled
+            approach to query generation while reducing the effort required to
+            get from a business question to executable SQL.
+          </p>
+          <blockquote>
+            When retries fail consistently, inspect the inputs and system
+            boundaries before blaming the model.
+          </blockquote>
+          <h2>Design principles</h2>
+          <ul>
+            <li>
+              Prefer deterministic orchestration when the process is
+              fundamentally sequential.
+            </li>
+            <li>
+              Separate retrieval, generation, validation, and execution
+              concerns.
+            </li>
+            <li>Bound retries and make failure states explicit.</li>
+            <li>
+              Use defense in depth: SQL validation, read-only credentials, and
+              human review.
+            </li>
+            <li>
+              Treat schema freshness as a data integration problem, not a prompt
+              problem.
+            </li>
+          </ul>
+          <p>
+            <strong>Disclosure:</strong> The diagram is a simplified reference
+            flow. Enterprise implementation details are intentionally omitted.
+          </p>
+          <a class="back-link" href="../index.html#work"
+            >← BACK TO SELECTED WORK</a
+          >
+        </article>
+        <aside class="side-panel">
+          <span>CASE FILE / 002</span>
+          <p>ARCHITECTURE<br />Graph-based orchestration</p>
+          <p>RELIABILITY<br />Validation · bounded retries · review</p>
+          <p>FAILURE MODE<br />Stale schema / semantic drift</p>
+        </aside>
+      </div>
+    </main>
+    <footer class="site-footer">
+      <span>ND / NIPUN DAVID</span><span>FROM ARCHITECTURE TO PRODUCTION</span
+      ><a href="../index.html">HOME ↗</a>
+    </footer>
+  </body>
+</html>
